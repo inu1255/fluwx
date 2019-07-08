@@ -28,14 +28,16 @@ import io.flutter.plugin.common.MethodChannel
 object FluwxResponseHandler {
 
     private var channel: MethodChannel? = null
+    private var channel2: MethodChannel? = null
 
     private const val errStr = "errStr"
     private const val errCode = "errCode"
     private const val openId = "openId"
     private const val type = "type"
 
-    fun setMethodChannel(channel: MethodChannel) {
+    fun setMethodChannel(channel: MethodChannel, channel2: MethodChannel) {
         FluwxResponseHandler.channel = channel
+        FluwxResponseHandler.channel2 = channel2
     }
 
 
@@ -127,6 +129,7 @@ object FluwxResponseHandler {
                 WechatPluginKeys.TRANSACTION to response.transaction
         )
 
+        channel2?.invokeMethod("onAuthResponse", result)
         channel?.invokeMethod("onAuthResponse", result)
     }
 
