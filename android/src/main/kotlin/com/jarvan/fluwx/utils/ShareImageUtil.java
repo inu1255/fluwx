@@ -50,7 +50,7 @@ public class ShareImageUtil {
     public static byte[] getImageData(PluginRegistry.Registrar registrar, String path) {
         byte[] result = null;
         if (path.startsWith(WeChatPluginImageSchema.SCHEMA_ASSETS)) {
-            String key = path.substring(WeChatPluginImageSchema.SCHEMA_ASSETS.length(), path.length());
+            String key = path.substring(WeChatPluginImageSchema.SCHEMA_ASSETS.length());
             AssetFileDescriptor fileDescriptor = AssetManagerUtil.openAsset(registrar, key, getPackage(key));
             try {
                 InputStream inputStream = fileDescriptor.createInputStream();
@@ -118,14 +118,23 @@ public class ShareImageUtil {
         return packageStr;
     }
 
-    private static File inputStreamToTmpFile(InputStream inputStream, String suffix) {
+    public static File inputStreamToFile(InputStream inputStream, String suffix, Context context) {
+
         File file = null;
 
         BufferedSink sink = null;
         Source source = null;
         OutputStream outputStream = null;
         try {
-            file = File.createTempFile(UUID.randomUUID().toString(), suffix);
+
+            File externalFile = context.getExternalCacheDir();
+            if (externalFile == null) {
+                return null;
+            }
+            file = new File(externalFile.getAbsolutePath() + File.separator + UUID.randomUUID().toString() + suffix);
+
+
+//            file = File.createTempFile(UUID.randomUUID().toString(), suffix);
             outputStream = new FileOutputStream(file);
             sink = Okio.buffer(Okio.sink(outputStream));
             source = Okio.source(inputStream);
@@ -162,7 +171,11 @@ public class ShareImageUtil {
         return file;
     }
 
+
     private static InputStream openStream(String url) {
+        if (!url.startsWith("https") && !url.startsWith("http")) {
+            url = "http://" + url;
+        }
         OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
         Request request = new Request.Builder().url(url).get().build();
         try {

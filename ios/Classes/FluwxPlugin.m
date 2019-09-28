@@ -5,11 +5,11 @@
 
 #import "FluwxPaymentHandler.h"
 #import "FluwxMethods.h"
-#import "FluwxKeys.h"
 #import "FluwxWXApiHandler.h"
 #import "FluwxShareHandler.h"
 #import "FluwxLaunchMiniProgramHandler.h"
 #import "FluwxSubscribeMsgHandler.h"
+#import "FluwxAutoDeductHandler.h"
 
 @implementation FluwxPlugin
 
@@ -23,9 +23,9 @@ FluwxWXApiHandler *_fluwxWXApiHandler;
 FluwxPaymentHandler *_fluwxPaymentHandler;
 FluwxLaunchMiniProgramHandler *_fluwxLaunchMiniProgramHandler;
 FluwxSubscribeMsgHandler *_fluwxSubscribeMsgHandler;
+FluwxAutoDeductHandler *_fluwxAutoDeductHandler;
 
-- (void)dealloc
-{
+- (void)dealloc {
 //    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -37,11 +37,11 @@ FluwxSubscribeMsgHandler *_fluwxSubscribeMsgHandler;
     FluwxPlugin *instance = [[FluwxPlugin alloc] initWithRegistrar:registrar methodChannel:channel];
     [[FluwxResponseHandler defaultManager] setMethodChannel:channel];
     [registrar addMethodCallDelegate:instance channel:channel];
-
+    [registrar addApplicationDelegate:instance];
 
 }
 
-- (instancetype)initWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar  methodChannel:(FlutterMethodChannel *)flutterMethodChannel {
+- (instancetype)initWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar methodChannel:(FlutterMethodChannel *)flutterMethodChannel {
     self = [super init];
 //    [[NSNotificationCenter defaultCenter] addObserver:self
 //                                             selector:@selector(handleOpenURL:)
@@ -49,17 +49,16 @@ FluwxSubscribeMsgHandler *_fluwxSubscribeMsgHandler;
 //                                               object:nil];
     if (self) {
         _fluwxShareHandler = [[FluwxShareHandler alloc] initWithRegistrar:registrar];
-        _fluwxAuthHandler = [[FluwxAuthHandler alloc] initWithRegistrar:registrar methodChannel:flutterMethodChannel] ;
+        _fluwxAuthHandler = [[FluwxAuthHandler alloc] initWithRegistrar:registrar methodChannel:flutterMethodChannel];
         _fluwxWXApiHandler = [[FluwxWXApiHandler alloc] init];
         _fluwxPaymentHandler = [[FluwxPaymentHandler alloc] initWithRegistrar:registrar];
         _fluwxLaunchMiniProgramHandler = [[FluwxLaunchMiniProgramHandler alloc] initWithRegistrar:registrar];
         _fluwxSubscribeMsgHandler = [[FluwxSubscribeMsgHandler alloc] initWithRegistrar:registrar];
+        _fluwxAutoDeductHandler = [[FluwxAutoDeductHandler alloc] initWithRegistrar:registrar];
     }
 
     return self;
 }
-
-
 
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
@@ -70,42 +69,51 @@ FluwxSubscribeMsgHandler *_fluwxSubscribeMsgHandler;
         return;
     }
 
-    if([@"isWeChatInstalled" isEqualToString :call.method]){
+    if ([@"isWeChatInstalled" isEqualToString:call.method]) {
         [_fluwxWXApiHandler checkWeChatInstallation:call result:result];
         return;
     }
 
 
-    if([@"sendAuth" isEqualToString :call.method]){
+    if ([@"sendAuth" isEqualToString:call.method]) {
         [_fluwxAuthHandler handleAuth:call result:result];
         return;
     }
 
-    if([@"payWithFluwx" isEqualToString :call.method]){
+    if ([@"payWithFluwx" isEqualToString:call.method]) {
         [_fluwxPaymentHandler handlePayment:call result:result];
         return;
     }
 
-    if([@"launchMiniProgram" isEqualToString :call.method]){
+    if ([@"launchMiniProgram" isEqualToString:call.method]) {
         [_fluwxLaunchMiniProgramHandler handleLaunchMiniProgram:call result:result];
         return;
     }
-    
-    if([@"subscribeMsg" isEqualToString: call.method]){
+
+    if ([@"subscribeMsg" isEqualToString:call.method]) {
         [_fluwxSubscribeMsgHandler handleSubscribeWithCall:call result:result];
         return;
     }
 
-    if([@"authByQRCode" isEqualToString:call.method]){
+    if ([@"authByQRCode" isEqualToString:call.method]) {
         [_fluwxAuthHandler authByQRCode:call result:result];
         return;
     }
 
-    if([@"stopAuthByQRCode" isEqualToString:call.method]){
+    if ([@"stopAuthByQRCode" isEqualToString:call.method]) {
         [_fluwxAuthHandler stopAuthByQRCode:call result:result];
         return;
     }
+    if ([@"autoDeduct" isEqualToString:call.method]) {
+        [_fluwxAutoDeductHandler handleAutoDeductWithCall:call result:result];
+        return;
+    }
 
+
+    if ([@"openWXApp" isEqualToString:call.method]) {
+        result(@([WXApi openWXApp]));
+        return;
+    }
     if ([call.method hasPrefix:@"share"]) {
         [_fluwxShareHandler handleShare:call result:result];
         return;
@@ -116,14 +124,28 @@ FluwxSubscribeMsgHandler *_fluwxSubscribeMsgHandler;
 
 }
 
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+    return [WXApi handleOpenURL:url delegate:[FluwxResponseHandler defaultManager]];
+}
 
--(BOOL)handleOpenURL:(NSNotification *)aNotification {
+// NOTE: 9.0以后使用新API接口
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<NSString *, id> *)options {
+    return [WXApi handleOpenURL:url delegate:[FluwxResponseHandler defaultManager]];
+}
 
-    if(handleOpenURLByFluwx){
-        NSString * aURLString =  [aNotification userInfo][@"url"];
-        NSURL * aURL = [NSURL URLWithString:aURLString];
+- (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void(^)(NSArray<id<UIUserActivityRestoring>> * __nullable restorableObjects))restorationHandler
+{
+    return [WXApi handleOpenUniversalLink:userActivity delegate:[FluwxResponseHandler defaultManager]];
+}
+
+
+- (BOOL)handleOpenURL:(NSNotification *)aNotification {
+
+    if (handleOpenURLByFluwx) {
+        NSString *aURLString = [aNotification userInfo][@"url"];
+        NSURL *aURL = [NSURL URLWithString:aURLString];
         return [WXApi handleOpenURL:aURL delegate:[FluwxResponseHandler defaultManager]];
-    } else{
+    } else {
         return NO;
     }
 

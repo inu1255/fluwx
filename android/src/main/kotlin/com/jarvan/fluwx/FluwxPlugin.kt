@@ -31,6 +31,7 @@ class FluwxPlugin(private val registrar: Registrar, channel: MethodChannel) : Me
             val channel = MethodChannel(registrar.messenger(), "com.jarvanmo/fluwx")
             val channel2 = MethodChannel(registrar.messenger(), "cn.inu1255.quan2go/method")
             WXAPiHandler.setRegistrar(registrar)
+            FluwxRequestHandler.setRegistrar(registrar)
             FluwxResponseHandler.setMethodChannel(channel,channel2)
             channel.setMethodCallHandler(FluwxPlugin(registrar, channel))
         }
@@ -41,6 +42,7 @@ class FluwxPlugin(private val registrar: Registrar, channel: MethodChannel) : Me
     private val fluwxPayHandler = FluwxPayHandler()
     private val fluwxLaunchMiniProgramHandler = FluwxLaunchMiniProgramHandler()
     private val fluwxSubscribeMsgHandler = FluwxSubscribeMsgHandler()
+    private val fluwxAutodeducthandler = FluwxAutoDeductHandler()
 
     init {
         fluwxShareHandler.setRegistrar(registrar)
@@ -96,6 +98,17 @@ class FluwxPlugin(private val registrar: Registrar, channel: MethodChannel) : Me
 
         if (WeChatPluginMethods.SUBSCRIBE_MSG == call.method) {
             fluwxSubscribeMsgHandler.subScribeMsg(call, result)
+            return
+        }
+
+        if (WeChatPluginMethods.AUTO_DEDUCT == call.method) {
+            fluwxAutodeducthandler.signAutoDeduct(call, result)
+            return
+        }
+
+        if ("openWXApp" == call.method) {
+            val isSent = WXAPiHandler.wxApi?.openWXApp() ?: false
+            result.success(isSent)
             return
         }
 

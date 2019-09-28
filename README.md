@@ -8,7 +8,9 @@
 QQ Group：892398530。
 
 ## Before
- Before using`Fluwx`,read this [article](https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1) first.
+ Before using`Fluwx`,read [the official documents](https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1) first.  
+ This is very important because some configurations or details are not listed here.
+
 
 
 ### What does Fluwx support?
@@ -22,13 +24,17 @@ QQ Group：892398530。
 * Pay.
 * Launch Mini-Program.
 * Subscribe Message.
-* Auth By QRCode
+* Auth By QRCode.
+* Sign Auto-Deduct.
+* Open WeChat App.
 
 ## Sample
 
 [See sample here](./example)
 
 [watch charged video here](https://study.163.com/course/introduction.htm?share=2&shareId=480000001896427&courseId=1209174838&_trace_c_p_k2_=e72467dc0df540579287a8ea996344a4)
+
+[upgrade to 1.0.0 or above](./doc/QUESTIONS.md)
 
 ## Dependencies
 
@@ -56,12 +62,14 @@ Before using`Fluwx`,you should init `FLuwx`：
 
  ```dart
     import 'package:fluwx/fluwx.dart' as fluwx;
-    fluwx.register(appId:"wxd930ea5d5a258f4f");
+    fluwx.register(appId:"wxd930ea5d5a258f4f",universalLink:"https://your.univeral.link.com/placeholder/");
+    
  ```
+Developers must provide `universalLink` if you want register WeChat via fluwx, otherwise, ignore.
 
 
-
-> NOTE：Although we can register WXApi via Fluwx,but there's still some work you have to do on the particular platform.For example, add a URLSchema for iOS.
+> NOTE：Although we can register WXApi via Fluwx,but there's still some work you have to do on the particular platform.For example, add  *URLSchema, LSApplicationQueriesSchemes or universal link* for iOS. 
+Please read the official documents for details.
 
 ### More
 * [Share](./doc/SHARE.md)
@@ -69,11 +77,11 @@ Before using`Fluwx`,you should init `FLuwx`：
 * [Payment](./doc/WXPay.md)
 * [Launch Mini-Program](./doc/LAUNCH_MINI_PROGRAM.md)
 * [Subscribe Message](./doc/SUBSCRIBE_MESSAGE.md)
-* [Response](./doc/RESPONSE.md)
 * [Auth By QRCode](./doc/AUTH_BY_QR_CODE.md)
+* [Sign Auto-Deduct](./doc/AUTO_DEDUCT.md)
+* [Receive Response Or Callback From WeChat](./doc/RESPONSE.md)
 
 ### Other
-* [Using Swift?](./doc/USING_SWIFT.md)
 * [Having Questions?](./doc/QUESTIONS.md)
 
 ### Waiting

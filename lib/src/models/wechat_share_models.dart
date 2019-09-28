@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 
 import '../utils/utils.dart';
@@ -157,20 +160,62 @@ class WeChatShareImageModel extends WeChatShareModel {
   final String thumbnail;
   final String title;
   final String description;
+  final Uint8List imageData;
 
-  WeChatShareImageModel(
-      {String transaction,
-      @required this.image,
-      this.description,
-      String thumbnail,
-      WeChatScene scene,
-      String messageExt,
-      String messageAction,
-      String mediaTagName,
-      this.title})
-      : this.transaction = transaction ?? "text",
+  WeChatShareImageModel({
+    String transaction,
+    @required this.image,
+    this.description,
+    String thumbnail,
+    WeChatScene scene,
+    String messageExt,
+    String messageAction,
+    String mediaTagName,
+    this.title,
+  })  : this.transaction = transaction ?? "text",
         this.thumbnail = thumbnail ?? "",
         assert(image != null),
+        this.imageData = null,
+        super(
+            mediaTagName: mediaTagName,
+            messageAction: messageAction,
+            messageExt: messageExt,
+            scene: scene);
+
+  WeChatShareImageModel.fromFile(
+    File imageFile, {
+    String transaction,
+    this.description,
+    String thumbnail,
+    WeChatScene scene,
+    String messageExt,
+    String messageAction,
+    String mediaTagName,
+    this.title,
+  })  : this.image = "file://${imageFile.path}",
+        this.transaction = transaction ?? "text",
+        this.thumbnail = thumbnail ?? "",
+        this.imageData = null,
+        super(
+            mediaTagName: mediaTagName,
+            messageAction: messageAction,
+            messageExt: messageExt,
+            scene: scene);
+
+  WeChatShareImageModel.fromUint8List({
+    @required this.imageData,
+    String transaction,
+    this.description,
+    String thumbnail,
+    WeChatScene scene,
+    String messageExt,
+    String messageAction,
+    String mediaTagName,
+    this.title,
+  })  : this.transaction = transaction ?? "text",
+        this.thumbnail = thumbnail ?? "",
+        this.image = "",
+        assert(imageData != null),
         super(
             mediaTagName: mediaTagName,
             messageAction: messageAction,
@@ -183,6 +228,7 @@ class WeChatShareImageModel extends WeChatShareModel {
       _transaction: transaction,
       _scene: scene.toString(),
       "image": image,
+      "imageData": imageData,
       _thumbnail: thumbnail,
       _mediaTagName: mediaTagName,
       _messageAction: messageAction,
